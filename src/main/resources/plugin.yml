@@ -1,0 +1,6 @@
+name: Teams
+version: ${project.version}
+main: com.phaseos.teams.Teams
+depend: [WorldEdit]
+authors: [SwiftLee]
+description: A plugin that allows for teams.
