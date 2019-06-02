@@ -20,4 +20,15 @@ public enum Rank {
     public int getRanking() {
         return this.ranking;
     }
+
+    public static Rank fromString(String str) {
+        if (str.equalsIgnoreCase("owner"))
+            return OWNER;
+        else if (str.equalsIgnoreCase("captain"))
+            return CAPTAIN;
+        else if (str.equalsIgnoreCase("normal"))
+            return NORMAL;
+
+        return null;
+    }
 }
