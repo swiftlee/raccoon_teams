@@ -1,5 +1,6 @@
 package com.phaseos.team;
 
+import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -12,6 +13,7 @@ public class TeamMember {
     private UUID teamMemberId;
     private Team team;
     private Rank rank;
+    private Location targetedWarp;
 
     public TeamMember(UUID teamMemberId) {
         this.teamMemberId = teamMemberId;
@@ -46,6 +48,10 @@ public class TeamMember {
 
     public void setRank(Rank rank) {
         this.rank = rank;
+    }
+
+    public UUID getTeamMemberId() {
+        return teamMemberId;
     }
 
     enum Permission {

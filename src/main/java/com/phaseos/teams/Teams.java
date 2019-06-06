@@ -5,13 +5,17 @@ import com.phaseos.command.Commands;
 import com.phaseos.team.Team;
 import com.phaseos.util.StringUtils;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Scoreboard;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public final class Teams extends JavaPlugin {
 
-    public Set<Team> onlineTeams = new HashSet<>();
+    private static Set<Team> onlineTeams = new HashSet<>();
+    private static HashMap<UUID, Scoreboard> onlineBoards;
     private Commands commands;
 
     @Override
@@ -30,5 +34,17 @@ public final class Teams extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+    }
+
+    public void addBoard(UUID uuid, Scoreboard board) {
+        onlineBoards.put(uuid, board);
+    }
+
+    public void removeBoard(UUID uuid) {
+        onlineBoards.remove(uuid);
+    }
+
+    public Set<Team> getOnlineTeams() {
+        return onlineTeams;
     }
 }
