@@ -91,6 +91,7 @@ public class Team {
             this.setAttribute("warp", "NULL");
             this.rally = null;
             this.setAttribute("rally", "NULL");
+            Bukkit.getPlayer(leader).sendMessage(StringUtils.fmt(""));
         }
     }
 
