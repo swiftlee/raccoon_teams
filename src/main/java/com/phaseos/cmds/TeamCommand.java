@@ -3,14 +3,22 @@ package com.phaseos.cmds;
 import com.phaseos.command.ArgumentParser;
 import com.phaseos.command.Command;
 import com.phaseos.command.PlayerCommand;
+import com.phaseos.team.Team;
+import com.phaseos.team.TeamMember;
 import com.phaseos.teams.Teams;
 import com.phaseos.util.StringUtils;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import java.util.Objects;
 
 public class TeamCommand extends Command {
-
     private static final String commandsHeader = StringUtils.fmt("&8&m----------------&r&8[ &6Gang Commands &8]&m----------------");
     private static final String listHeader = StringUtils.fmt("&8&m----------------&r&8[ &6Gangs List &8]&m----------------");
     private static final String topHeader = StringUtils.fmt("&8&m----------------&r&8[ &6Top Gangs &8]&m----------------");
@@ -21,19 +29,47 @@ public class TeamCommand extends Command {
         super("team", "t");
         this.plugin = plugin;
         addSubCommand(new HelpCommand());
-
+        addSubCommand(new CreateCommand());
+        addSubCommand(new JoinCommand());
+        addSubCommand(new SetPublicCommand());
+        addSubCommand(new DisbandCommand());
+        addSubCommand(new SetLeaderCommand());
+        addSubCommand(new PromoteCommand());
+        addSubCommand(new DemoteCommand());
+        addSubCommand(new ToggleFriendlyFireCommand());
+        addSubCommand(new KickCommand());
+        addSubCommand(new InviteCommand());
+        addSubCommand(new SetHqCommand());
+        addSubCommand(new SetWarpCommand());
+        addSubCommand(new DelWarpCommand());
+        addSubCommand(new SetRallyCommand());
+        addSubCommand(new HqCommand());
+        addSubCommand(new RallyCommand());
+        addSubCommand(new WarpCommand());
+        addSubCommand(new LeaveCommand());
+        addSubCommand(new TeamChatCommand());
+        addSubCommand(new InfoCommand());
     }
 
-    public static class SpawnCommand extends Command {
-
-        public SpawnCommand() {
-            super("spawn");
+    private static boolean areNearbyPlayers(Player player) {
+        for (Entity e : player.getNearbyEntities(20, 20, 20)) {
+            if (e instanceof Player)
+                return true;
         }
+        return false;
+    }
 
-        @Override
-        protected void execute(CommandSender sender, ArgumentParser ap) {
-
-        }
+    private static int warp(Player player, Location location, Teams plugin) {
+        return new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (Teams.ongoingWarps.containsKey(player.getUniqueId()) && Teams.ongoingWarps.get(player.getUniqueId()) == this.getTaskId()) {
+                    player.teleport(location, PlayerTeleportEvent.TeleportCause.PLUGIN);
+                    // remove player from map post-teleport
+                    Teams.ongoingWarps.remove(player.getUniqueId());
+                }
+            }
+        }.runTaskLater(plugin, 20 * 10L).getTaskId();
     }
 
     @Override
@@ -46,6 +82,62 @@ public class TeamCommand extends Command {
             sender.sendMessage(StringUtils.fmt("&cYou cannot execute this command."));
     }
 
+    public static class SpawnCommand extends Command {
+        private Teams plugin;
+
+        public SpawnCommand(Teams plugin) {
+            super("spawn");
+            this.plugin = plugin;
+        }
+
+        @Override
+        protected void execute(CommandSender sender, ArgumentParser ap) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                if (areNearbyPlayers(player))
+                    player.sendMessage(StringUtils.fmt("&4Teleport cancelled!"));
+                else {
+                    // player currently is attempting to warp elsewhere
+                    if (Teams.ongoingWarps.containsKey(player.getUniqueId())) {
+                        // player canceled their old warp, reset so they can travel to new warp
+                        Bukkit.getServer().getScheduler().cancelTask(Teams.ongoingWarps.get(player.getUniqueId()));
+                        player.sendMessage(StringUtils.fmt("&4Cancelled your previous teleport!"));
+                    }
+                    //noinspection ConstantConditions
+                    Teams.ongoingWarps.put(player.getUniqueId(), warp(player, Objects.requireNonNull(StringUtils.locationFromStr(plugin.getConfig().getString("spawn-location"))), plugin));
+                }
+            }
+        }
+    }
+
+    public static class TeamChatCommand extends Command {
+
+
+        public TeamChatCommand() {
+            super("teamchat");
+        }
+
+        @Override
+        protected void execute(CommandSender sender, ArgumentParser ap) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                TeamMember member = new TeamMember(player.getUniqueId());
+                if (member.hasTeam()) {
+                    // invert teamchat toggle
+                    member.setTeamChatToggled(!member.isTeamChatToggled());
+                    // display message on teamchat toggle
+                    if (member.isTeamChatToggled())
+                        player.sendMessage(StringUtils.fmt("&3Teamchat is now &aON&3."));
+                    else
+                        player.sendMessage(StringUtils.fmt("&3Teamchat is now &cOFF&3."));
+                } else
+                    player.sendMessage(StringUtils.fmt("&cYou must be in a team use this command."));
+            } else
+                sender.sendMessage(StringUtils.fmt("&cYou must be a player to execute this command!"));
+        }
+
+    }
+
     private class HelpCommand extends PlayerCommand {
 
         public HelpCommand() {
@@ -54,43 +146,42 @@ public class TeamCommand extends Command {
 
         @Override
         protected void execute(Player player, ArgumentParser ap) {
-
             player.sendMessage(commandsHeader);
             for (String subCommandName : getParent().getSubCommandNames())
                 player.sendMessage("§e/g " + subCommandName);
-
         }
 
     }
 
     private class CreateCommand extends PlayerCommand {
-
-
         public CreateCommand() {
             super("create");
         }
 
         @Override
         protected void execute(Player player, ArgumentParser ap) {
-
+            TeamMember member = new TeamMember(player.getUniqueId());
+            if (!member.hasTeam())
+                new Team(ap.get(1), member.getTeamMemberId());
+            else
+                player.sendMessage(StringUtils.fmt("&cYou are already in a team!"));
 
         }
-
     }
 
     private class JoinCommand extends PlayerCommand {
-
-
         public JoinCommand() {
             super("join");
         }
 
         @Override
         protected void execute(Player player, ArgumentParser ap) {
+            TeamMember member = new TeamMember(player.getUniqueId());
+            if (!member.hasTeam()) {
 
-
+            } else
+                player.sendMessage(StringUtils.fmt("&cYou are already in a team!"));
         }
-
     }
 
     private class SetPublicCommand extends PlayerCommand {
@@ -307,20 +398,6 @@ public class TeamCommand extends Command {
 
         public LeaveCommand() {
             super("leave");
-        }
-
-        @Override
-        protected void execute(Player player, ArgumentParser ap) {
-
-
-        }
-
-    }
-
-    private class TeamChatCommand extends PlayerCommand {
-
-        public TeamChatCommand() {
-            super("teamchat");
         }
 
         @Override

@@ -5,26 +5,36 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.HashSet;
 import java.util.UUID;
 
 public class TeamMember {
 
     public static YamlConfiguration teamMemberData = new YamlConfiguration();
+    private static TeamMemberDatabase db = new TeamMemberDatabase();
     private UUID teamMemberId;
     private Team team;
     private Rank rank;
     private Location targetedWarp;
+    private boolean isTeamChatToggled = false;
+    HashSet<UUID> teamInvitations = new HashSet<>();
 
     public TeamMember(UUID teamMemberId) {
         this.teamMemberId = teamMemberId;
         fillData();
     }
 
+    private static void reloadMemberData() {
+        db.save();
+        db.load();
+    }
+
     private void fillData() {
-        String teamId = teamMemberData.getString(teamMemberId.toString() + ".team");
+        String teamId = teamMemberData.getString(teamMemberId.toString() + ConfigNode.Team_ID.getNode());
         this.team = teamId != null && !teamId.equalsIgnoreCase("NULL") ? new Team(UUID.fromString(teamId)) : null;
-        String rank = teamMemberData.getString(teamMemberId.toString() + ".rank");
+        String rank = teamMemberData.getString(teamMemberId.toString() + ConfigNode.RANK.getNode());
         this.rank = rank != null && !rank.equalsIgnoreCase("NULL") ? Rank.fromString(rank) : null;
+        this.isTeamChatToggled = teamMemberData.getBoolean(teamMemberId.toString() + ConfigNode.TEAM_CHAT.getNode());
     }
 
     public boolean hasTeam() {
@@ -52,6 +62,33 @@ public class TeamMember {
 
     public UUID getTeamMemberId() {
         return teamMemberId;
+    }
+
+    public boolean isTeamChatToggled() {
+        return isTeamChatToggled;
+    }
+
+    public void setTeamChatToggled(boolean teamChatToggled) {
+        setAttribute(ConfigNode.TEAM_CHAT, teamChatToggled);
+    }
+
+    private void setAttribute(ConfigNode node, boolean value) {
+        teamMemberData.set(teamMemberId.toString() + node.getNode(), value);
+        reloadMemberData();
+    }
+
+    private enum ConfigNode {
+        Team_ID(".team"), RANK(".rank"), TEAM_CHAT(".team-chat");
+
+        private String node;
+
+        ConfigNode(String node) {
+            this.node = node;
+        }
+
+        public String getNode() {
+            return node;
+        }
     }
 
     enum Permission {

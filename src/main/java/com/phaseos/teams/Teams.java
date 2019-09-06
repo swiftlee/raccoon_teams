@@ -16,6 +16,7 @@ public final class Teams extends JavaPlugin {
 
     private static Set<Team> onlineTeams = new HashSet<>();
     private static HashMap<UUID, Scoreboard> onlineBoards;
+    public static HashMap<UUID, Integer> ongoingWarps;
     private Commands commands;
 
     @Override
@@ -27,7 +28,7 @@ public final class Teams extends JavaPlugin {
         // command registry
         commands = new Commands(this).setErrorMessages(StringUtils.fmt("&cThat player does not exist!"),
                 StringUtils.fmt("&cThat's not a number"),
-                StringUtils.fmt("&cYou don't have any permissions to this.")).registerCommand(new TeamCommand(this)).registerCommand(new TeamCommand.SpawnCommand());
+                StringUtils.fmt("&cYou don't have any permissions to this.")).registerCommand(new TeamCommand(this)).registerCommand(new TeamCommand.SpawnCommand(this)).registerCommand(new TeamCommand.TeamChatCommand());
 
     }
 
