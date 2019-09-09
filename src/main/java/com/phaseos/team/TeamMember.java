@@ -1,7 +1,10 @@
 package com.phaseos.team;
 
+import com.phaseos.util.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,9 +49,21 @@ public class TeamMember {
     }
 
     public void join(String teamName) {
-        if (Team.exists(teamName)) {
-            Team team = new Team(teamName);
+        join(Team.getTeamId(teamName));
+    }
+
+    public void join(UUID teamId) {
+        if (Team.exists(teamId)) {
+            Team team = new Team(teamId);
             team.addTeamMember(teamMemberId);
+            setTeam(teamId);
+            Player newMember = Bukkit.getPlayer(teamMemberId);
+            newMember.sendMessage("&3You successfully joined " + team.getName() + "!");
+            for (UUID member : team.getTeamMembers()) {
+                Player p = Bukkit.getPlayer(member);
+                if (p != null && p.isOnline())
+                    p.sendMessage(StringUtils.fmt("&f" + newMember.getName() + " &3has joined the team!"));
+            }
         }
     }
 
@@ -58,6 +73,12 @@ public class TeamMember {
 
     public void setRank(Rank rank) {
         this.rank = rank;
+        this.setAttribute(ConfigNode.RANK, rank.toString());
+    }
+
+    public void setTeam(UUID teamId) {
+        this.team = new Team(teamId);
+        this.setAttribute(ConfigNode.Team_ID, teamId.toString());
     }
 
     public UUID getTeamMemberId() {
@@ -69,10 +90,11 @@ public class TeamMember {
     }
 
     public void setTeamChatToggled(boolean teamChatToggled) {
+        this.isTeamChatToggled = teamChatToggled;
         setAttribute(ConfigNode.TEAM_CHAT, teamChatToggled);
     }
 
-    private void setAttribute(ConfigNode node, boolean value) {
+    private void setAttribute(ConfigNode node, Object value) {
         teamMemberData.set(teamMemberId.toString() + node.getNode(), value);
         reloadMemberData();
     }

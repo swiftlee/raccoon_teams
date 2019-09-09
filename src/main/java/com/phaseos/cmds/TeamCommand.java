@@ -178,7 +178,12 @@ public class TeamCommand extends Command {
         protected void execute(Player player, ArgumentParser ap) {
             TeamMember member = new TeamMember(player.getUniqueId());
             if (!member.hasTeam()) {
+                if (ap.hasExactly(1)) {
+                } else {
+                    // join first team in queue
+                    member.join(Team.getTeamId(ap.get(0)));
 
+                }
             } else
                 player.sendMessage(StringUtils.fmt("&cYou are already in a team!"));
         }

@@ -71,6 +71,15 @@ public class Team {
         return false;
     }
 
+    public static boolean exists(UUID teamId) {
+        for (String key : teamData.getKeys(false)) {
+            UUID id = UUID.fromString(teamData.getString(key));
+            if (id.equals(teamId))
+                return true;
+        }
+        return false;
+    }
+
     private void create(String name, UUID leader) {
         if (name.length() > 16)
             Bukkit.getPlayer(leader).sendMessage(StringUtils.fmt("&cTeam name must contain 16 characters or less."));

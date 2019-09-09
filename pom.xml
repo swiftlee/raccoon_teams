@@ -69,7 +69,8 @@
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
             <version>1.7.10-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
+            <systemPath>${project.basedir}/dependencies/spigot-1.7.10-SNAPSHOT.jar</systemPath>
+            <scope>system</scope>
         </dependency>
     </dependencies>
 </project>

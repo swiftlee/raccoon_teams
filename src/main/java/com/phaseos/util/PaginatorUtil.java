@@ -46,15 +46,22 @@ public class PaginatorUtil {
         public java.util.Map<Integer, Page> getPages() {
 
             // create pages
-            while (information.length >= pageSize && pageSize > 0) {
-                String[] pageContent = new String[pageSize <= information.length ? pageSize : information.length];
-                        System.arraycopy(information, 0, pageContent, 0, pageContent.length);
-                if (information.length < pageSize)
-                    this.information = new String[]{};
-                else
-                    this.information = Arrays.copyOfRange(information, pageContent.length, this.information.length);
+            if (information.length < pageSize) {
+                String[] pageContent = new String[information.length];
+                System.arraycopy(information, 0, pageContent, 0, pageContent.length);
+                this.information = Arrays.copyOfRange(information, pageContent.length, this.information.length);
+                this.pages.put(1, new Page(pageContent, lineMarker));
+            } else {
+                while (information.length >= pageSize && pageSize > 0) {
+                    String[] pageContent = new String[pageSize];
+                    System.arraycopy(information, 0, pageContent, 0, pageContent.length);
+                    if (information.length < pageSize)
+                        this.information = new String[]{};
+                    else
+                        this.information = Arrays.copyOfRange(information, pageContent.length, this.information.length);
 
-                this.pages.put(++pageCount, new Page(pageContent, lineMarker));
+                    this.pages.put(++pageCount, new Page(pageContent, lineMarker));
+                }
             }
 
             return this.pages;
